@@ -1,0 +1,73 @@
+A Estratégia da Fita (Sugestão)
+Antes de definir os blocos, pense em como organizar sua fita. Usar uma "área de rascunho" (scratchpad) no final da fita é uma técnica poderosa. Sua fita poderia ter a seguinte estrutura:
+
+[código da máquina M] $ [palavra w] & [estado_atual_M] & [simbolo_lido_w]
+
+O & é um novo separador que você introduz para a sua área de rascunho.
+[estado_atual_M]: Onde sua MTU armazena o estado atual da máquina simulada (ex: q11).
+[simbolo_lido_w]: Onde sua MTU armazena o símbolo que acabou de ler de w (ex: a11).
+Os Blocos Fundamentais
+1. Bloco: Initialize
+Objetivo: Preparar a fita para o início da simulação.
+Ações:
+Encontra o separador $.
+Vai para o final da fita.
+Escreve a estrutura de rascunho: &q1&. (Começa no estado q1, o símbolo lido ainda está vazio).
+Posiciona a cabeça de leitura no primeiro símbolo da palavra w (logo após o $).
+Saída: Leva para o bloco principal do ciclo de simulação.
+2. Bloco: Read_Virtual_Symbol
+Objetivo: Ler o símbolo "apontado" pela cabeça virtual em w e salvá-lo na área de rascunho.
+Pré-condição: A cabeça está no símbolo de w a ser lido.
+Ações:
+Copia o símbolo sob a cabeça (ex: a11).
+Vai até a área de rascunho no final da fita.
+Apaga o [simbolo_lido_w] antigo e escreve o novo que foi copiado.
+Saída: Leva para o bloco Find_Transition.
+3. Bloco: Find_Transition (O mais complexo)
+Objetivo: Procurar na descrição de M (à esquerda do $) a transição correta.
+Pré-condição: A área de rascunho contém o estado e o símbolo atuais.
+Ações:
+Posiciona a cabeça no início da fita.
+Entra em um loop que, para cada transição (entre os #): a. Compara o estado da transição com o [estado_atual_M] do rascunho. b. Se os estados baterem, compara o símbolo da transição com o [simbolo_lido_w] do rascunho. c. Se ambos baterem, a transição foi encontrada!
+Saídas (Duas saídas possíveis):
+[FOUND]: Se encontrou a transição. A cabeça deve ser deixada no início da transição encontrada para os próximos blocos a usarem. Leva para o bloco Execute_Transition.
+[NOT_FOUND]: Se chegou no $ e não encontrou nenhuma transição correspondente. Isso significa que a máquina M rejeita. Leva para o bloco Finalize_Reject.
+4. Bloco: Execute_Write
+Objetivo: Executar a parte da "escrita" da transição encontrada.
+Pré-condição: A cabeça está no início da transição que o bloco Find_Transition encontrou.
+Ações:
+Lê o "símbolo a ser escrito" da transição.
+Memoriza esse símbolo.
+Vai até a posição do símbolo original em w.
+A parte mais difícil: Apaga o símbolo antigo e escreve o novo. Atenção: Se o novo símbolo tiver um tamanho diferente do antigo (ex: substituir a1 por a111), você precisará de um sub-bloco para "empurrar" o resto da fita para a direita para criar espaço. Este sub-bloco (Shift_Tape_Right) é complexo, mas essencial.
+Saída: Leva para o bloco Execute_Move.
+5. Bloco: Execute_Move
+Objetivo: Mover a "cabeça virtual" em w.
+Pré-condição: A cabeça da MTU está na posição do símbolo recém-escrito em w.
+Ações:
+(Precisa voltar rapidamente para a regra de transição para ver o movimento L ou R).
+Volta para a posição em w e move a cabeça da MTU uma posição para a Esquerda (L) ou Direita (R), simulando o movimento da cabeça de M.
+Saída: Leva para o bloco Update_State.
+6. Bloco: Update_State
+Objetivo: Atualizar o estado na área de rascunho.
+Pré-condição: A cabeça está no início da transição usada.
+Ações:
+Lê o "estado de destino" da transição.
+Vai para a área de rascunho no final da fita.
+Apaga o [estado_atual_M] antigo e escreve o novo estado de destino.
+Saídas (Duas saídas possíveis):
+[IS_FINAL]: Se o novo estado for qf. Leva para o bloco Finalize_Accept.
+[CONTINUE]: Se o novo estado não for qf. Leva de volta para o início do ciclo (Read_Virtual_Symbol).
+7. Blocos Finais
+Bloco: Finalize_Accept
+
+Ação: Vai para o final da palavra w, encontra o primeiro branco e escreve #A. Entra em um estado final de aceitação da sua MTU.
+Bloco: Finalize_Reject
+
+Ação: Vai para o final da palavra w, encontra o primeiro branco e escreve #R. Entra em um estado final de aceitação da sua MTU. (Lembre-se, sua MTU sempre aceita se a simulação terminar corretamente, o #A ou #R é que indica o resultado de M).
+Diagrama Principal (Visão Geral)
+No seu JFLAP, a tela principal de "Building Blocks" ficaria assim:
+
+Dica de Ouro: Construa e teste um bloco de cada vez. Crie um arquivo JFLAP separado só para testar o bloco Find_Transition, por exemplo. Dê a ele uma fita com uma área de rascunho e uma mini-descrição de máquina e veja se ele sai pelo caminho [FOUND] ou [NOT_FOUND] corretamente.
+
+Essa abordagem modular transforma um problema gigantesco em vários probleminhas gerenciáveis. Boa sorte!
